@@ -1,7 +1,14 @@
 package com.andrdc.springpersistence.entities;
 
+import javax.persistence.*;
+
+@Entity
+@Table(name = "officers")
 public class Officer {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @Enumerated(EnumType.STRING)
     private Rank rank;
     private String firstName;
     private String lastName;
