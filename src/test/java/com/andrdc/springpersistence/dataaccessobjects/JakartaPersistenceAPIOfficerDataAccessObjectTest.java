@@ -5,12 +5,12 @@ import com.andrdc.springpersistence.entities.Rank;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -18,9 +18,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-public class JdbcOfficerDataAccessObjectTest {
+public class JakartaPersistenceAPIOfficerDataAccessObjectTest {
     @Autowired
-    private JdbcOfficerDataAccessObject dataAccessObject;
+    private JakartaPersistenceAPIOfficerDataAccessObject dataAccessObject;
+
+    @Autowired
+    private JdbcTemplate template;
+
+    // private method to retrieve the current ids in the database
+    private List<Integer> getIds() {
+        return template.query("select id from officers", (resultSet, number) -> resultSet.getInt("id"));
+    }
 
     @Test
     public void save() {
@@ -31,9 +39,11 @@ public class JdbcOfficerDataAccessObjectTest {
 
     @Test
     public void findByIdThatExists() {
-        Optional<Officer> officer = dataAccessObject.findById(1);
-        assertTrue(officer.isPresent());
-        assertEquals(1, officer.get().getId().intValue());
+        getIds().forEach(id -> {
+            Optional<Officer> officer = dataAccessObject.findById(id);
+            assertTrue(officer.isPresent());
+            assertEquals(id, officer.get().getId().intValue());
+        });
     }
 
     @Test
@@ -43,7 +53,7 @@ public class JdbcOfficerDataAccessObjectTest {
     }
 
     @Test
-    public void count() { assertEquals(5, dataAccessObject.count()); }
+    public void count() { assertEquals(getIds().size(), dataAccessObject.count()); }
 
     @Test
     public void findAll() {
@@ -53,7 +63,7 @@ public class JdbcOfficerDataAccessObjectTest {
 
     @Test
     public void delete() {
-        IntStream.rangeClosed(1, 5).forEach(id -> {
+        getIds().forEach(id -> {
             Optional<Officer> officer = dataAccessObject.findById(id);
             assertTrue(officer.isPresent());
             dataAccessObject.delete(officer.get());
@@ -63,6 +73,6 @@ public class JdbcOfficerDataAccessObjectTest {
 
     @Test
     public void existsById() {
-        IntStream.rangeClosed(1, 5).forEach(id -> { assertTrue(dataAccessObject.existsById(id)); });
+        getIds().forEach(id -> { assertTrue(dataAccessObject.existsById(id)); });
     }
 }
